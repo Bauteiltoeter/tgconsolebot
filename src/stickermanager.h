@@ -1,3 +1,14 @@
+/**
+ * The StickerManager contains all sticker-related data. It contains a list of stickers and can search for names and ids
+ * 
+ * Author: Torben Hellige (Bauteiltöter)
+ * Date: 23.12.2019
+ * 
+ * License: MIT (See LICENSE file)
+ * 
+ */
+
+
 #ifndef STICKERMANAGER_H__
 #define STICKERMANAGER_H__
 

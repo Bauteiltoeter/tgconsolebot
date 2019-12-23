@@ -1,3 +1,13 @@
+/**
+ * 
+ * Author: Torben Hellige (Bauteiltöter)
+ * Date: 23.12.2019
+ * 
+ * License: MIT (See LICENSE file)
+ * 
+ */
+
+
 #include "stickermanager.h"
 #include <exception>
 
@@ -12,15 +22,13 @@ StickerManager::StickerManager()
 
 void StickerManager::load()
 {
-    // Create empty property tree object
     pt::ptree tree;
 
-    // Parse the XML into the property tree.
     try 
     {
         pt::read_json(filename, tree);
 
-
+        //read all stickers
         for (auto t : tree.get_child("stickers")) {
             std::shared_ptr<Sticker> newSticker = std::make_shared<Sticker>(t.second.get<std::string>("name"), t.second.get<std::string>("id"));
             stickerset.push_back(newSticker);
@@ -32,9 +40,9 @@ void StickerManager::load()
     }
 }
 
+//write stickers to configuration file
 void StickerManager::save()
 {
-    // Create an empty property tree object.
     pt::ptree tree;
 
 
@@ -49,22 +57,24 @@ void StickerManager::save()
     pt::write_json(filename,tree);
 }
 
-
+//Add a new sticker
 void StickerManager::addSticker(std::shared_ptr<Sticker> s)
 {
+    //make sure we don't have a sticker two times
     if(getStickerById(s->getId()) != nullptr)
     {
         std::cout << "Sticker id already in list" << std::endl;
         return;
     }
 
-
+    //make sure our names are unique
     if(getStickerByName(s->getName()) != nullptr)
     {
         std::cout << "Sticker name already in list" << std::endl;
         return;
     }
 
+    //Save sticker to list and write to disk
     stickerset.push_back(s);
     save();
 
@@ -75,7 +85,6 @@ std::shared_ptr<Sticker> StickerManager::getStickerById(std::string id)
 {
     for(std::shared_ptr<Sticker> s : stickerset)
     {
-
         if( s->getId() == id)
             return s;
     }

@@ -1,3 +1,14 @@
+/**
+ * The Sticker contains all sticker-related data, the unique id and the name
+ * 
+ * Author: Torben Hellige (Bauteiltöter)
+ * Date: 23.12.2019
+ * 
+ * License: MIT (See LICENSE file)
+ * 
+ */
+
+
 #ifndef STICKER_H__
 #define STICKER_H__
 

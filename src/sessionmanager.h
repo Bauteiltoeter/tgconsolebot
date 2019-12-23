@@ -1,3 +1,13 @@
+/**
+ * The SessionManager contains all session-related data like the telegram token and the user list
+ * 
+ * Author: Torben Hellige (Bauteiltöter)
+ * Date: 23.12.2019
+ * 
+ * License: MIT (See LICENSE file)
+ * 
+ */
+
 #ifndef SESSIONMANAGER_H__
 #define SESSIONMANAGER_H__
 
@@ -5,7 +15,7 @@
 #include <stdint.h>
 #include <memory>
 #include <list>
-#include <iostream>
+
 struct User {
     std::string user;
     uint64_t chatId;

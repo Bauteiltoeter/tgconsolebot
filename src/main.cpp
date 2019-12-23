@@ -1,29 +1,34 @@
+/**
+ * Main logic of the tgconsolebot
+ * 
+ * Author: Torben Hellige (Bauteiltöter)
+ * Date: 23.12.2019
+ * 
+ * License: MIT (See LICENSE file)
+ * 
+ */
+
+
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <chrono>
 #include <thread>
-
 #include <tgbot/tgbot.h>
-
-
 #include <boost/program_options.hpp>
+#include <memory>
+
 #include "stickermanager.h"
 #include "sticker.h"
 #include "sessionmanager.h"
-#include <memory>
-using namespace std;
-//using namespace TgBot;
-
-double temperature;
 
 namespace po = boost::program_options;
 
 
 int main(int argc, char * argv[]) 
 {
-    StickerManager sm;
+    StickerManager stickerManager;
     std::unique_ptr<SessionManager> sessionManager;
 
     std::string newToken="";
@@ -35,7 +40,7 @@ int main(int argc, char * argv[])
     bool waitForNewUsers=false;
     bool addSticker=false;
 
-    po::options_description desc("Allowed options");
+    po::options_description desc("Allowed options: ");
     desc.add_options()
         ("help", "produce help message")
         ("message,m",     po::value<std::string>(), "Send message")
@@ -48,6 +53,7 @@ int main(int argc, char * argv[])
         ("add-sticker", "Show sticker ID");
 
     po::variables_map vm;
+
     try
     {
         po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -55,31 +61,28 @@ int main(int argc, char * argv[])
     catch(const std::exception& e)
     {
         std::cerr  << e.what() << '\n';
-        cout << desc << endl;
+        std::cout << desc << std::endl;
         return -1;
     }
     po::notify(vm);    
 
     if (vm.count("help")) 
     {
-        cout << desc << "\n";
+        std::cout << desc << "\n";
         return 1;
     }
 
     if(vm.count("add-user"))
     {
-        cout << "Wait for new useres" << endl;
+        std::cout << "Wait for new useres" << std::endl;
         waitForNewUsers=true;
     }
 
     if(vm.count("add-sticker"))
     {
-        cout << "Showing sticker IDs" << endl << "Please send stickers";
+        std::cout << "Showing sticker IDs" << std::endl << "Please send stickers";
         addSticker=true;
     }
-
-
-
 
     if(vm.count("session"))
     {
@@ -88,7 +91,7 @@ int main(int argc, char * argv[])
     else
     {
         sessionName = "default";
-        cout << "No sessionname set, using 'default'" << endl;
+        std::cout << "No sessionname set, using 'default'" << std::endl;
     }
     
     sessionManager = std::make_unique<SessionManager>(sessionName);
@@ -106,7 +109,7 @@ int main(int argc, char * argv[])
 
     if(!sessionManager->tokenValid())
     {
-        cout << "No valid token set, abort" << endl;
+        std::cout << "No valid token set, abort" << std::endl;
         return -1;
     }
 
@@ -115,7 +118,6 @@ int main(int argc, char * argv[])
         fileName = vm["file"].as<std::string>();
     }
     
-
     if(vm.count("message"))
     {
         message = vm["message"].as<std::string>();
@@ -131,69 +133,70 @@ int main(int argc, char * argv[])
         stickerId = vm["sid"].as<std::string>();
     }
 
+    //Check if the user wants to do nothing
     if(!waitForNewUsers && !addSticker && message=="" && stickerId == "" && stickerName == "" && fileName=="")
     {
-        cout << "No message specified" << endl;
+        std::cout << "No action specified" << std::endl;
         return -1;
     }
     
-    
-
-    TgBot::Bot* bot;
+    //userinput done, create telegram bot
+    std::unique_ptr<TgBot::Bot> bot = nullptr;
 
     try 
     {
-        bot = new TgBot::Bot(sessionManager->getToken());
+        bot = std::make_unique<TgBot::Bot>(sessionManager->getToken());
     }
     catch(const std::exception& e)
     {
-        cout << "handler!" << endl;
+        std::cout << "Error while creating the telegram bot!" << std::endl;
         std::cerr << e.what() << '\n';
         return -1;
     }
 
-    
-
-    
-
+    //Do we need to responde on user input or are we just sending data out?
     if(waitForNewUsers || addSticker)
     {
+        //we have to register the callback for new useres
         if(waitForNewUsers)
         {
             bot->getEvents().onCommand("start", [&bot,&sessionManager](TgBot::Message::Ptr message)
             {
-                cout << "Got new user, id:"  << message->chat->id << endl;
-
+                std::cout << "Got new user, id:"  << message->chat->id << std::endl;
+                //Create and add user
                 std::shared_ptr<User> newUser = std::make_shared<User>(message->chat->username,message->chat->id);
                 sessionManager->addUser(newUser);
             });
         }
 
+        //We have to wait for new stickers
         if(addSticker)
         {
-            bot->getEvents().onAnyMessage([&bot,&sm](const TgBot::Message::Ptr msg){
+            bot->getEvents().onAnyMessage([&bot,&stickerManager](const TgBot::Message::Ptr msg){
                 if(msg->sticker)
                 {
-                    cout << "Got message with sticker id: " << msg->sticker->fileId << endl;
-                    cout << "Please enter name for this sticker: ";
+                    std::cout << "Got message with sticker id: " << msg->sticker->fileId << std::endl;
+                    std::cout << "Please enter name for this sticker: ";
                     std::string stickername;
 
-                    cin >> stickername;
-                    cout << endl << "New name:" << stickername << endl;
+                    std::cin >> stickername;
+                    std::cout << std::endl << "New name:" << stickername << std::endl;
 
+                    //Create sticker and store in stickerManager
                     std::shared_ptr<Sticker> newSticker = std::make_shared<Sticker>(stickername,msg->sticker->fileId);
-                    sm.addSticker(newSticker);
-                    
-                    
+                    stickerManager.addSticker(newSticker);     
                 }
                 else
-                    cout << "Got message with invalid sticker id" << endl;
+                {
+                    std::cout << "Got message with invalid sticker id" << std::endl;
+                }
 
             }); 
         }
 
         try 
         {
+            //start endless loop
             printf("Bot username: %s\n", bot->getApi().getMe()->username.c_str());
             bot->getApi().deleteWebhook();
             
@@ -205,49 +208,46 @@ int main(int argc, char * argv[])
                 longPoll.start();
             }
         } 
-        catch (exception& e) 
+        catch (std::exception& e) 
         {
             printf("error: %s\n", e.what());
         }
     }
     else
     {
-        std::cout << "Send message " << message << endl;
+        //We do not wait for telegram input, we are in fire and forget-mode
 
         bool messageSend=false;
-        int seconds=0;
+        int errorCounter=0;
         std::string error="";
         do
         {
             try {
-
-
-
-                if(seconds>0)
+                //A previous try failed, send an error message to all users
+                if(errorCounter>0)
                 {
-                    
-
                     for(auto &u : sessionManager->getUserList())
-                        bot->getApi().sendMessage(u->chatId,"Last message failed to send, retry number "+std::to_string(seconds) + " was successfull. Last error: \"" + error+"\""); //Karrn
-                    
-                  }
+                        bot->getApi().sendMessage(u->chatId,"Last message failed to send, retry number "+std::to_string(errorCounter) + " was successfull. Last error: \"" + error+"\""); //Karrn
+                }
 
+                //send a message if requested
                 if(message!="")
                 {
                     for(auto &u : sessionManager->getUserList())
                         bot->getApi().sendMessage(u->chatId,message);
                 }
 
+                //send a sticker by ID if requested
                 if(stickerId!="")
-                {
-                    
+                { 
                     for(auto &u : sessionManager->getUserList())
                         bot->getApi().sendSticker(u->chatId,stickerId);
                 }
 
+                //send a sticker by name if requested
                 if(stickerName!="")
                 {
-                    std::shared_ptr<Sticker> s = sm.getStickerByName(stickerName);
+                    std::shared_ptr<Sticker> s = stickerManager.getStickerByName(stickerName); //sticker id lookup
                     if(s)
                     {
                         for(auto &u : sessionManager->getUserList())
@@ -255,6 +255,7 @@ int main(int argc, char * argv[])
                     }   
                 }
 
+                //send a file if requested
                 if(fileName!="")
                 {
                     TgBot::InputFile::Ptr f = TgBot::InputFile::fromFile(fileName,"");
@@ -264,15 +265,15 @@ int main(int argc, char * argv[])
 
                 messageSend = true;
             }
-            catch (exception& e) 
+            catch (std::exception& e) 
             {
                 printf("error: %s\n", e.what());
                 error=e.what();
-                sleep(2);
-                seconds++;
+                sleep(5);
+                errorCounter++;
             }
         }
-        while(!messageSend);
+        while(!messageSend && errorCounter < 6); //try for up to 30s
 
     }
     
