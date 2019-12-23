@@ -1,0 +1,7 @@
+CMakeCache.txt
+CMakeFiles/*
+Makefile
+poolbot
+cmake_install.cmake
+src/.fuse_hidden*
+tgconsolebot
