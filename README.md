@@ -86,3 +86,49 @@ This program needs libboost-program-options-dev to compile.
 cmake .
 make -j8
 </pre>
+
+## Configuration files
+
+The tgconsolebot stores his configuration files in the home of the user.
+~/.config/tgconsolebot/
+There are at least two configuration files:
+
+### sticker.json
+
+The sticker.json contains the configured stickers with the unique IDs
+
+<pre>
+{
+    "stickers": {
+        "sticker": {
+            "name": "glax-ok",
+            "id": "CAADBAADRAIAAvJATg5-co6kzNjmmhYE"
+        },
+        "sticker": {
+            "name": "foodsticker",
+            "id": "CAADBAAD-wAEvrEHDZK6DiawRJsWBA"
+        }
+    }
+}
+</pre>
+
+### default-session.json
+
+The *-session.json is created for every session. It contains the token, name of the session and the user list.
+
+<pre>
+{
+    "token": "aaaaaaaaa:abcdefghijklmnopqrstuvwxyz012345678",
+    "name": "default",
+    "users": {
+        "user": {
+            "name": "user1",
+            "chatId": "123456789"
+        },
+        "user": {
+            "name": "user2",
+            "chatId": "123456790"
+        }
+    }
+}
+</pre>
